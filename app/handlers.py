@@ -243,7 +243,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await upsert_user(s, update.effective_user.id, update.effective_user.username, update.effective_user.full_name)
     await update.message.reply_text(
         "Привет! 💖\n\n"
-        "Я — бот Адрианы, мастера ногтевого сервиса.\n"
+        "Я — бот Светланы, мастера ногтевого сервиса.\n"
         "С радостью помогу тебе записаться на удобное время и подобрать услугу.\n\n"
         "Что я умею:\n"
         "• записать на маникюр или педикюр\n"
@@ -1580,7 +1580,7 @@ async def handle_admin_confirm_price(update: Update, context: ContextTypes.DEFAU
                     f"{appt.start_dt.astimezone(settings.tz).strftime('%d.%m %H:%M')}\n"
                     f"Услуга: {appointment_services_label(appt)}\n"
                     f"Цена: {price_label}\n"
-                    f"Адриана ждет Вас!\n\n"
+                    f"Светлана ждет Вас!\n\n"
                 ),
             )
             await asyncio.sleep(5)
