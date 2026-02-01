@@ -81,10 +81,12 @@ async def ensure_default_services(session: AsyncSession) -> None:
     if q.first():
         return
     session.add_all([
-        Service(name="Подмышки", price=25, duration_min=20, buffer_min=0, is_active=True, sort_order=10),
-        Service(name="Голени", price=35, duration_min=30, buffer_min=0, is_active=True, sort_order=20),
-        Service(name="Бикини классика", price=45, duration_min=40, buffer_min=0, is_active=True, sort_order=30),
-        Service(name="Бикини глубокое", price=55, duration_min=50, buffer_min=0, is_active=True, sort_order=40),
+        Service(name="Маникюр классический", price=1200, duration_min=60, buffer_min=0, is_active=True, sort_order=10),
+        Service(name="Маникюр + гель-лак", price=2300, duration_min=90, buffer_min=0, is_active=True, sort_order=20),
+        Service(name="Снятие гель-лака + маникюр", price=1600, duration_min=75, buffer_min=0, is_active=True, sort_order=30),
+        Service(name="Педикюр аппаратный", price=2500, duration_min=90, buffer_min=0, is_active=True, sort_order=40),
+        Service(name="Педикюр + гель-лак", price=3200, duration_min=120, buffer_min=0, is_active=True, sort_order=50),
+        Service(name="Наращивание ногтей (короткая длина)", price=3500, duration_min=150, buffer_min=0, is_active=True, sort_order=60),
     ])
 
 def _to_tz(dt_utc: datetime, tz: pytz.BaseTzInfo) -> datetime:
