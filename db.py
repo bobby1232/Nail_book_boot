@@ -159,17 +159,18 @@ class DB:
         svc_count = await con.fetchval("SELECT COUNT(*) FROM services;")
         if svc_count == 0:
             seed = [
-                ("Подмышки", 1500, 30),
-                ("Бикини классика", 2500, 45),
-                ("Глубокое бикини", 3500, 60),
-                ("Голени", 2500, 45),
-                ("Ноги полностью", 4500, 75),
+                ("Маникюр классический", 1200, 60),
+                ("Маникюр + гель-лак", 2300, 90),
+                ("Снятие гель-лака + маникюр", 1600, 75),
+                ("Педикюр аппаратный", 2500, 90),
+                ("Педикюр + гель-лак", 3200, 120),
+                ("Наращивание ногтей (короткая длина)", 3500, 150),
             ]
             for i, (name, price, dur) in enumerate(seed, start=1):
                 await con.execute("""
                     INSERT INTO services(name, price, duration_min, buffer_min, is_active, sort_order)
                     VALUES($1, $2, $3, $4, TRUE, $5);
-                """, name, price, dur, Defaults.BUFFER_MIN, i)
+                """, name, price, dur, 0, i)
 
     # ---------- helpers ----------
     async def upsert_user(self, tg_id: int, username: str | None, full_name: str | None) -> int:
