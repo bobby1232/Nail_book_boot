@@ -80,15 +80,15 @@ def booking_categories_kb(hidden_categories: tuple[str, ...] | list[str] | set[s
 
 def _service_button_text(service: Service, *, selected: bool = False) -> str:
     price = format_price(service.price)
-    prefix = f"{price} ₽ • {int(service.duration_min)} мин"
+    details = f"{int(service.duration_min)} мин • {price} ₽"
     name = service_label_with_category(service)
     marker = "✅ " if selected else ""
 
-    max_name_len = max(MAX_SERVICE_BUTTON_TEXT_LEN - len(prefix) - len(marker) - 3, 8)
-    if len(name) > max_name_len:
-        name = f"{name[:max_name_len - 1]}…"
+    line = f"{marker}{name} • {details}"
+    if len(line) <= MAX_SERVICE_BUTTON_TEXT_LEN:
+        return line
 
-    return f"{marker}{prefix} • {name}"
+    return f"{marker}{name}\n{details}"
 
 def services_kb(services: list[Service]) -> InlineKeyboardMarkup:
     rows = []
