@@ -295,7 +295,7 @@ def reminder_kb(appt_id: int, *, allow_reschedule: bool = False) -> InlineKeyboa
 
 def contacts_kb(*, yandex_maps_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Открыть в Яндекс.Картах", url=yandex_maps_url)],
+        [InlineKeyboardButton("📍 Открыть адрес на карте", url=yandex_maps_url)],
         [InlineKeyboardButton("📋 Скопировать контакты", callback_data="contact:copy")],
     ])
 
