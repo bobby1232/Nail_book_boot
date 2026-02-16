@@ -88,7 +88,7 @@ K_BREAK_REPEAT = "break_repeat"
 K_BREAK_CANCEL_IDS = "break_cancel_ids"
 K_BOOKING_CATEGORY = "booking_category"
 
-ADDRESS_LINE = "Москва, Товарищеский переулок, 7с2, вход «Оконный континент», 1 этаж, кабинет 107"
+ADDRESS_LINE = "Москва, Зеленоград, улица 1-е Мая, 5, 1 подъезд, домофон 1849#, 2 этаж, кабинет 6"
 
 
 def _hidden_service_categories(context: ContextTypes.DEFAULT_TYPE) -> tuple[str, ...]:
