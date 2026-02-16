@@ -13,7 +13,6 @@ STATUS_RU = {
 }
 
 RU_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-MAX_SERVICE_BUTTON_TEXT_LEN = 44
 
 def status_ru(v: str) -> str:
     return STATUS_RU.get(v, v)
@@ -77,32 +76,22 @@ def booking_categories_kb(hidden_categories: tuple[str, ...] | list[str] | set[s
     rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
     return InlineKeyboardMarkup(rows)
 
-
-def _service_button_text(service: Service, *, selected: bool = False) -> str:
-    price = format_price(service.price)
-    prefix = f"{price} ₽ • {int(service.duration_min)} мин"
-    name = service_label_with_category(service)
-    marker = "✅ " if selected else ""
-
-    max_name_len = max(MAX_SERVICE_BUTTON_TEXT_LEN - len(prefix) - len(marker) - 3, 8)
-    if len(name) > max_name_len:
-        name = f"{name[:max_name_len - 1]}…"
-
-    return f"{marker}{prefix} • {name}"
-
 def services_kb(services: list[Service]) -> InlineKeyboardMarkup:
     rows = []
     for s in services:
-        rows.append([InlineKeyboardButton(_service_button_text(s), callback_data=f"svc:{s.id}")])
+        price = format_price(s.price)
+        rows.append([InlineKeyboardButton(f"{service_label_with_category(s)} • {int(s.duration_min)} мин • {price}", callback_data=f"svc:{s.id}")])
     rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
     return InlineKeyboardMarkup(rows)
 
 def services_multi_kb(services: list[Service], selected_ids: set[int]) -> InlineKeyboardMarkup:
     rows = []
     for s in services:
+        price = format_price(s.price)
+        marker = "✅ " if s.id in selected_ids else ""
         rows.append([
             InlineKeyboardButton(
-                _service_button_text(s, selected=s.id in selected_ids),
+                f"{marker}{service_label_with_category(s)} • {int(s.duration_min)} мин • {price}",
                 callback_data=f"svcsel:{s.id}",
             )
         ])
@@ -117,7 +106,8 @@ def services_multi_kb(services: list[Service], selected_ids: set[int]) -> Inline
 def admin_services_kb(services: list[Service]) -> InlineKeyboardMarkup:
     rows = []
     for s in services:
-        rows.append([InlineKeyboardButton(_service_button_text(s), callback_data=f"admsvc:{s.id}")])
+        price = format_price(s.price)
+        rows.append([InlineKeyboardButton(f"{service_label_with_category(s)} • {int(s.duration_min)} мин • {price}", callback_data=f"admsvc:{s.id}")])
     rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
     return InlineKeyboardMarkup(rows)
 
