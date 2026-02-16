@@ -13,16 +13,7 @@ STATUS_RU = {
 }
 
 RU_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-MAX_SERVICE_BUTTON_TEXT_LEN = 36
-
-
-def _truncate_button_text(text: str, max_len: int) -> str:
-    text = (text or "").strip()
-    if len(text) <= max_len:
-        return text
-    if max_len <= 1:
-        return "…"
-    return f"{text[:max_len - 1].rstrip()}…"
+MAX_SERVICE_BUTTON_TEXT_LEN = 44
 
 def status_ru(v: str) -> str:
     return STATUS_RU.get(v, v)
@@ -92,14 +83,12 @@ def _service_button_text(service: Service, *, selected: bool = False) -> str:
     details = f"{int(service.duration_min)} мин • {price} ₽"
     name = service_label_with_category(service)
     marker = "✅ " if selected else ""
-    separator = " • "
 
-    max_name_len = MAX_SERVICE_BUTTON_TEXT_LEN - len(marker) - len(details) - len(separator)
-    if max_name_len < 8:
-        return f"{marker}{_truncate_button_text(name, MAX_SERVICE_BUTTON_TEXT_LEN - len(marker))}"
+    line = f"{marker}{name} • {details}"
+    if len(line) <= MAX_SERVICE_BUTTON_TEXT_LEN:
+        return line
 
-    short_name = _truncate_button_text(name, max_name_len)
-    return f"{marker}{short_name}{separator}{details}"
+    return f"{marker}{name}\n{details}"
 
 def services_kb(services: list[Service]) -> InlineKeyboardMarkup:
     rows = []
