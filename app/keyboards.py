@@ -2,7 +2,13 @@ from __future__ import annotations
 from datetime import date, datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from app.models import Service, Appointment
-from app.utils import format_price, appointment_services_label, service_label_with_category
+from app.utils import (
+    CATEGORY_ORDER,
+    format_price,
+    appointment_services_label,
+    service_category_title,
+    service_label_with_category,
+)
 
 STATUS_RU = {
     "Hold": "Ожидает подтверждения",
@@ -76,6 +82,26 @@ def booking_categories_kb(hidden_categories: tuple[str, ...] | list[str] | set[s
     rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
     return InlineKeyboardMarkup(rows)
 
+
+def category_selector_kb(
+    categories: list[str],
+    *,
+    callback_prefix: str,
+    back_callback: str,
+) -> InlineKeyboardMarkup:
+    rows = []
+    ordered = [category for category in CATEGORY_ORDER if category in categories]
+    ordered.extend(category for category in categories if category not in ordered)
+    for category in ordered:
+        rows.append([
+            InlineKeyboardButton(
+                service_category_title(category),
+                callback_data=f"{callback_prefix}:{category}",
+            )
+        ])
+    rows.append([InlineKeyboardButton("⬅️ Назад", callback_data=back_callback)])
+    return InlineKeyboardMarkup(rows)
+
 def services_kb(services: list[Service]) -> InlineKeyboardMarkup:
     rows = []
     for s in services:
@@ -103,12 +129,12 @@ def services_multi_kb(services: list[Service], selected_ids: set[int]) -> Inline
     rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
     return InlineKeyboardMarkup(rows)
 
-def admin_services_kb(services: list[Service]) -> InlineKeyboardMarkup:
+def admin_services_kb(services: list[Service], back_callback: str = "back:main") -> InlineKeyboardMarkup:
     rows = []
     for s in services:
         price = format_price(s.price)
         rows.append([InlineKeyboardButton(f"{service_label_with_category(s)} • {int(s.duration_min)} мин • {price}", callback_data=f"admsvc:{s.id}")])
-    rows.append([InlineKeyboardButton("⬅️ Назад", callback_data="back:main")])
+    rows.append([InlineKeyboardButton("⬅️ Назад", callback_data=back_callback)])
     return InlineKeyboardMarkup(rows)
 
 def dates_kb(dates: list[date]) -> InlineKeyboardMarkup:

@@ -34,12 +34,11 @@ from app.keyboards import (
     admin_services_kb, admin_dates_kb, admin_slots_kb, admin_manage_appt_kb,
     admin_reschedule_dates_kb, admin_reschedule_slots_kb, admin_reschedule_confirm_kb,
     break_dates_kb, break_slots_kb, break_repeat_kb, status_ru, RU_WEEKDAYS, cancel_breaks_kb,
-    contacts_kb, admin_visit_confirm_kb,
+    contacts_kb, admin_visit_confirm_kb, category_selector_kb,
 )
 from app.models import AppointmentStatus, BlockedInterval, Service
 from app.schedule_style import DAY_TIMELINE_STYLE, WEEK_SCHEDULE_STYLE
 from app.utils import (
-    CATEGORY_ORDER,
     format_price,
     appointment_services_label,
     service_category_title,
@@ -96,6 +95,16 @@ def _hidden_service_categories(context: ContextTypes.DEFAULT_TYPE) -> tuple[str,
     if not cfg:
         return tuple()
     return tuple(getattr(cfg, "hidden_service_categories", tuple()) or tuple())
+
+
+def _available_service_categories(services: list[Service]) -> list[str]:
+    categories: list[str] = []
+    for service in services:
+        category = (service.category or "").strip()
+        if not category or category in categories:
+            continue
+        categories.append(category)
+    return categories
 
 
 def _selected_service_ids(context: ContextTypes.DEFAULT_TYPE) -> list[int]:
@@ -351,31 +360,45 @@ async def text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Используй кнопки меню 👇", reply_markup=main_menu_for(update, context))
 
 async def show_prices(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.pop("price_category", None)
     session_factory = context.bot_data["session_factory"]
     async with session_factory() as s:
         services = await list_active_services_filtered(s, _hidden_service_categories(context))
-    if not services:
+    categories = _available_service_categories(services)
+    if not categories:
         await update.message.reply_text("Пока нет услуг. Напиши мастеру.", reply_markup=main_menu_for(update, context))
         return
+    await update.message.reply_text(
+        "Выбери категорию для просмотра прайс-листа:",
+        reply_markup=category_selector_kb(
+            categories,
+            callback_prefix="pricecat",
+            back_callback="back:main",
+        ),
+    )
 
-    grouped: dict[str, list[Service]] = {}
+async def show_prices_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
+    session_factory = context.bot_data["session_factory"]
+    async with session_factory() as s:
+        all_services = await list_active_services_filtered(s, _hidden_service_categories(context))
+        services = await list_active_services_by_category_filtered(s, category, _hidden_service_categories(context))
+    if not services:
+        return await update.callback_query.message.edit_text("Для этой категории пока нет услуг.")
+
+    lines = [f"Прайс-лист • {service_category_title(category)}:"]
     for service in services:
-        grouped.setdefault(service.category or "", []).append(service)
+        lines.append(f"• {service_label_with_category(service)} — {format_price(service.price)} — {int(service.duration_min)} мин")
 
-    lines = ["Прайс-лист:"]
-    ordered_categories = [category for category in CATEGORY_ORDER if category in grouped]
-    ordered_categories.extend(category for category in grouped if category not in ordered_categories)
+    context.user_data["price_category"] = category
+    await update.callback_query.message.edit_text(
+        "\n".join(lines),
+        reply_markup=category_selector_kb(
+            _available_service_categories(all_services),
+            callback_prefix="pricecat",
+            back_callback="back:prices",
+        ),
+    )
 
-    for category in ordered_categories:
-        category_services = grouped.get(category, [])
-        if not category_services:
-            continue
-        lines.append("")
-        lines.append(f"{service_category_title(category)}:")
-        for sv in category_services:
-            lines.append(f"• {sv.name} — {format_price(sv.price)} — {int(sv.duration_min)} мин")
-
-    await update.message.reply_text("\n".join(lines), reply_markup=main_menu_for(update, context))
 async def show_contacts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     address_query = quote(ADDRESS_LINE)
     yandex_maps_url = f"https://yandex.ru/maps/?text={address_query}"
@@ -441,19 +464,45 @@ async def admin_start_booking(update: Update, context: ContextTypes.DEFAULT_TYPE
             return await update.callback_query.message.edit_text("Нет доступа.")
         return
     _clear_admin_booking(context)
+    context.user_data.pop("admin_booking_category", None)
+    return await admin_show_booking_categories(update, context)
+
+
+async def admin_show_booking_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
     session_factory = context.bot_data["session_factory"]
     async with session_factory() as s:
         services = await list_active_services_filtered(s, _hidden_service_categories(context))
-    if not services:
+    categories = _available_service_categories(services)
+    if not categories:
         if update.message:
             await update.message.reply_text("Услуги пока не настроены.", reply_markup=admin_menu_kb())
         elif update.callback_query:
             await update.callback_query.message.edit_text("Услуги пока не настроены.")
         return
+
+    text = "Выбери категорию услуг для записи:"
+    reply_markup = category_selector_kb(
+        categories,
+        callback_prefix="admbookcat",
+        back_callback="back:main",
+    )
     if update.message:
-        await update.message.reply_text("Выбери услугу для записи:", reply_markup=admin_services_kb(services))
+        await update.message.reply_text(text, reply_markup=reply_markup)
     elif update.callback_query:
-        await update.callback_query.message.edit_text("Выбери услугу для записи:", reply_markup=admin_services_kb(services))
+        await update.callback_query.message.edit_text(text, reply_markup=reply_markup)
+
+
+async def admin_show_services_by_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
+    context.user_data["admin_booking_category"] = category
+    session_factory = context.bot_data["session_factory"]
+    async with session_factory() as s:
+        services = await list_active_services_by_category_filtered(s, category, _hidden_service_categories(context))
+    if not services:
+        return await update.callback_query.message.edit_text("Для этой категории пока нет услуг.")
+    await update.callback_query.message.edit_text(
+        f"{service_category_title(category)}\n\nВыбери услугу для записи:",
+        reply_markup=admin_services_kb(services, back_callback="admback:categories"),
+    )
 
 async def cb_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -474,6 +523,14 @@ async def cb_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=services_multi_kb(services, set()),
         )
         return
+
+    if data.startswith("pricecat:"):
+        category = data.split(":", 1)[1]
+        return await show_prices_category(update, context, category)
+
+    if data.startswith("admbookcat:"):
+        category = data.split(":", 1)[1]
+        return await admin_show_services_by_category(update, context, category)
 
     if data.startswith("svcsel:"):
         svc_id = int(data.split(":")[1])
@@ -675,6 +732,25 @@ async def cb_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "admback:services":
         return await admin_start_booking(update, context)
+
+    if data == "admback:categories":
+        return await admin_show_booking_categories(update, context)
+
+    if data == "back:prices":
+        session_factory = context.bot_data["session_factory"]
+        async with session_factory() as s:
+            services = await list_active_services_filtered(s, _hidden_service_categories(context))
+        categories = _available_service_categories(services)
+        if not categories:
+            return await query.message.edit_text("Пока нет услуг. Напиши мастеру.")
+        return await query.message.edit_text(
+            "Выбери категорию для просмотра прайс-листа:",
+            reply_markup=category_selector_kb(
+                categories,
+                callback_prefix="pricecat",
+                back_callback="back:main",
+            ),
+        )
 
     if data == "admback:dates":
         return await admin_flow_dates(update, context)
