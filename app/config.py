@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import os
 
+from texts import get_brand_name
+
 @dataclass(frozen=True)
 class Config:
     bot_token: str
@@ -76,7 +78,7 @@ def load_config() -> Config:
         admin_telegram_ids=admin_ids,
         database_url=db_url,
         timezone=os.getenv("TIMEZONE", "Europe/Amsterdam").strip(),
-        name=os.getenv("NAME", "Найра").strip() or "Найра",
+        name=os.getenv("NAME", "").strip() or get_brand_name("Найра"),
 
         webhook_url=webhook_url,
         port=port,

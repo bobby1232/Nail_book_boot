@@ -47,6 +47,7 @@ from app.utils import (
 )
 from texts import (
     CONTACTS,
+    ADDRESS_LINE,
     PRECARE_RECOMMENDATIONS,
     AFTERCARE_RECOMMENDATIONS,
     get_precare_recommendations_parts,
@@ -86,9 +87,6 @@ K_BREAK_REASON = "break_reason"
 K_BREAK_REPEAT = "break_repeat"
 K_BREAK_CANCEL_IDS = "break_cancel_ids"
 K_BOOKING_CATEGORY = "booking_category"
-
-ADDRESS_LINE = "Москва, Зеленоград, улица 1-е Мая, 5, 1 подъезд, домофон 1849#, 2 этаж, кабинет 6"
-
 
 def _hidden_service_categories(context: ContextTypes.DEFAULT_TYPE) -> tuple[str, ...]:
     cfg: Config = context.bot_data.get("cfg")
