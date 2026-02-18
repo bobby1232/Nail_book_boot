@@ -11,7 +11,7 @@ from app.models import Appointment, AppointmentStatus, User, Service
 from app.logic import get_settings
 from app.keyboards import reminder_kb, admin_visit_confirm_kb
 from app.utils import format_price, appointment_services_label
-from texts import get_aftercare_recommendations_parts
+from texts import get_aftercare_recommendations_parts, get_reminder_template
 
 
 
@@ -20,25 +20,8 @@ WEEKDAY_RU_FULL = ["Понедельник", "Вторник", "Среда", "Ч
 def weekday_ru_full(dt: datetime) -> str:
     return WEEKDAY_RU_FULL[dt.weekday()]
 
-REMINDER_48H_TEMPLATE = (
-    "👋 Здравствуйте!\n\n"
-    "Напоминаем о вашей записи:\n"
-    "**{service}**\n"
-    "📅 **{date}**\n"
-    "⏰ **{time}**\n\n"
-    "Если планы изменились — запись можно перенести или отменить заранее.\n"
-    "Будем рады видеть вас 💛"
-)
-
-REMINDER_2H_TEMPLATE = (
-    "⏰ Скоро встречаемся!\n\n"
-    "Ваша запись сегодня:\n"
-    "**{service}**\n"
-    "🕒 **{time}**\n\n"
-    "Пожалуйста, приходите за 5 минут.\n"
-    "Оплата наличными.\n"
-    "Если не успеваете, напишите, я постараюсь помочь 🤝"
-)
+REMINDER_48H_TEMPLATE = get_reminder_template(48)
+REMINDER_2H_TEMPLATE = get_reminder_template(2)
 
 
 def _utcnow() -> datetime:
